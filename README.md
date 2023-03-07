@@ -1,4 +1,4 @@
-# Reactのエントリーポイントファイル「index.tsx」の名前を変えてみる
+# Reactの実行開始ファイル「index.tsx」の名前を変更してみる
 
 ## はじめに
 create-react-appでテンプレートを作成した場合、エントリーポイントは`index.tsx`固定になっています。
