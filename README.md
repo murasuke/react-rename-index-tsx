@@ -1,46 +1,101 @@
-# Getting Started with Create React App
+# Reactのエントリーポイントファイル「index.tsx」の名前を変えてみる
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## はじめに
+create-react-appでテンプレートを作成した場合、エントリーポイントは`index.tsx`固定になっています。
+ふと、このファイル名を変更するにはどうすればいいか？気になったので実験してみました。
 
-## Available Scripts
+eject('npm run eject')を実行すると、隠されていた設定ファイルとビルドスクリプトが出力されます。
 
-In the project directory, you can run:
+その中に`config\paths.js`というファイルがあり、各種パスが定義されていました。
+`appIndexJs`を書き換えれば目的が達成できそうです。
 
-### `npm start`
+ただ、ejectすると後が大変ですので[react-app-rewired](https://www.npmjs.com/package/react-app-rewired)を使って書き換えてみます。
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+```js
+// config after eject: we're in ./config/
+module.exports = {
+  dotenv: resolveApp('.env'),
+  appPath: resolveApp('.'),
+  appBuild: resolveApp(buildPath),
+  appPublic: resolveApp('public'),
+  appHtml: resolveApp('public/index.html'),
+  appIndexJs: resolveModule(resolveApp, 'src/index'),
+  appPackageJson: resolveApp('package.json'),
+  appSrc: resolveApp('src'),
+  appTsConfig: resolveApp('tsconfig.json'),
+  appJsConfig: resolveApp('jsconfig.json'),
+  yarnLockFile: resolveApp('yarn.lock'),
+  testsSetup: resolveModule(resolveApp, 'src/setupTests'),
+  proxySetup: resolveApp('src/setupProxy.js'),
+  appNodeModules: resolveApp('node_modules'),
+  appWebpackCache: resolveApp('node_modules/.cache'),
+  appTsBuildInfoFile: resolveApp('node_modules/.cache/tsconfig.tsbuildinfo'),
+  swSrc: resolveModule(resolveApp, 'src/service-worker'),
+  publicUrlOrPath,
+};
+```
 
-### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 前提
 
-### `npm run build`
+create-react-appで作成したプログラム(--template typescript)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 手順
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+production buildを行う際、source mapを`inline'(jsソース自体に埋め込む)設定にします。
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+① package.jsonの`devDependencies`に`react-app-rewired`を追加
 
-### `npm run eject`
+```sh
+  npm i -D react-app-rewired
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+② ビルドの設定変更を行うため`config-overrides.js`をルートフォルダに作成
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+`paths.appIndexJs`の設定を上書きします。
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```js
+const path = require('path');
+module.exports = {
+  paths: function (paths, env) {
+    paths.appIndexJs = path.resolve(__dirname, 'src/entry-point.tsx');
+    return paths;
+  },
+};
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+③ package.jsonを修正
 
-## Learn More
+```json
+  "scripts": {
+-    "start": "react-scripts start",
+-    "build": "react-scripts build",
++    "start": "react-app-rewired start",
++    "build": "react-app-rewired build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  }
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+④ `index.tsx`を`entry-point.tsx`にリネーム
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```sh
+mv index.tsx entry-point.tsx
+```
+
+![img10](./img/img10.png)
+
+⑤ 動作確認
+
+```sh
+npm run start
+```
+いつもの画面が表示されました
+
+![img20](./img/img20.png)
+
+
+## 参考ページ
+[react-app-rewired](https://www.npmjs.com/package/react-app-rewired)には`path`だけではなく、`webpack, jest, devServer`の書き換え方の説明が乗っています。
+
