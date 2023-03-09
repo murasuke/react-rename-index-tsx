@@ -43,8 +43,6 @@ create-react-appで作成したプログラム(--template typescript)
 
 ## 手順
 
-production buildを行う際、source mapを`inline'(jsソース自体に埋め込む)設定にします。
-
 ① package.jsonの`devDependencies`に`react-app-rewired`を追加
 
 ```sh
